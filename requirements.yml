@@ -1,0 +1,35 @@
+name: aggregate_ee
+channels:
+  - conda-forge
+  - anaconda
+dependencies:
+  - python=3
+  - pandas
+  - numpy
+  - dask
+  - seaborn
+  - matplotlib
+  - xlrd
+  - openpyxl
+  - pyarrow
+  - fastparquet
+  - tqdm
+  - joblib
+  - pip
+  - nodejs
+  - jupyterlab
+  - black
+  - jupyterlab_code_formatter
+  - jupyterlab-git
+  - dask-labextension
+  - scikit-learn
+  - earthengine-api
+  - geopandas
+  - folium
+  - geemap
+  - rasterio
+  - xarray-spatial
+  - xarray
+  - affine
+  - geopy
+  - google-cloud-storage
