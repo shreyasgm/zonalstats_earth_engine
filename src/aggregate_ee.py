@@ -38,6 +38,7 @@ def aggregate_ee(
     boundaries_ee,
     id_cols,
     scaleFactor=None,
+    set_date=None,
     export_to_gcs=False,
     gcs_bucket=None,
 ):
@@ -49,6 +50,7 @@ def aggregate_ee(
         boundaries_ee: Earth Engine FeatureCollection with geometries to aggregate to
         id_cols: ID columns from boundaries_ee to aggregate by
         scaleFactor: Earth Engine reduceRegions scaleFactor
+        set_date: Date to set if image does not have a timestamp
         export_to_gcs: Whether to export to Google Cloud Storage. Otherwise, string with CSV filename to create.
         gcs_bucket: Name of GCS bucket
 
@@ -64,7 +66,10 @@ def aggregate_ee(
     else:
         # Reduce
         reduced_fc = get_reduced_image(
-            img_ee, fc_boundaries=boundaries_ee, scaleFactor=scaleFactor
+            img_ee,
+            fc_boundaries=boundaries_ee,
+            scaleFactor=scaleFactor,
+            set_date=pd.to_datetime(set_date),
         )
 
     # Extract
