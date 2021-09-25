@@ -7,11 +7,12 @@ import pandas as pd
 from geopandas import GeoDataFrame, points_from_xy
 from pyhdf.SD import SD, SDC
 
+from projections.constants import STANDARD_CRS, MODIS_CRS
+
+
 PIXEL_SIZE = 463.312716525
 UPPER_LEFT_Y = 10007554.677
 UPPER_LEFT_X = -20015109.354
-MODIS_CRS = "+proj=sinu +a=6371007.181 +b=6371007.181 +units=m"
-STANDARD_CRS = 4326
 
 
 class HDF:

@@ -1,10 +1,12 @@
+import geopandas as gpd
 import numpy as np
 import pandas as pd
-import geopandas as gpd
 import shapely
-from shapely.geometry.polygon import Polygon
 import xarray
-from shapely.geometry import MultiPolygon, LineString
+from shapely.geometry import LineString, MultiPolygon
+from shapely.geometry.polygon import Polygon
+
+from projections.constants import FLAT_CRS
 
 
 def create_by_separation(df, lat: str = "lat", lon: str = "lon"):
@@ -45,7 +47,7 @@ def get_intersection_area(
     mask = slice(None)
 
     intersection = df.loc[mask, raster].intersection(pol).set_crs(epsg=4326)
-    intersection_area = intersection.to_crs(epsg=3035).area
+    intersection_area = intersection.to_crs(FLAT_CRS).area
 
     if value_col:
         subdf = df.loc[mask, [lat, lon, value_col]].copy()
