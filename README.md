@@ -1,5 +1,5 @@
 # Projections
-[projections](src/projections) is a collection of utils written to combine geographical data in various formats (e.g. TIF, NC, TXT) into a set of agregations in tabular format. These modules are tailored for the data they were written for, so it may be necessary to adapt some routines to acommodate new sources of data.
+[projections](src/projections) is a collection of utils written to combine geographical data in various formats (e.g. [TIF](src/projections/utils.py), [NC](src/projections/temperature.py), [TXT](src/projections/elevation.py), [HDF](src/projections/modis.py)) into a set of agregations in tabular format. These modules are tailored for the data they were written for, thus the naming and organisation of the files makes reference to these specific usecases, so it may be necessary to adapt some routines to acommodate new sources of data.
 
 Specific applications of these methods can be found in the [Notebooks](src/projections/Notebooks) directory. As an example, the main elements of [GPCP](https://psl.noaa.gov/data/gridded/data.gpcp.html) processing are highligted below (see [full notebook](src/projections/Notebooks/GPCP.ipynb) for more details):
 
