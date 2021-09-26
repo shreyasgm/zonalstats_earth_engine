@@ -124,24 +124,42 @@ def filter_array_by_maximum_bounds(array: xarray.DataArray, pol):
 
 
 def get_array_slice_indices(min_value, max_value, array):
-    min_index = find_index(min_value, array)
-    max_index = find_index(max_value, array)
+    if is_increasing_array(array):
+        min_index = find_index_from_increasing_array(min_value, array)
+        max_index = find_index_from_increasing_array(max_value, array)
+        max_element = array[max_index] if max_index < len(array) else array[-1]
+        min_element = array[min_index]
+        offset = 1
+        max_index += offset
+    else:
+        min_index = find_index_from_decreasing_array(min_value, array)
+        max_index = find_index_from_decreasing_array(max_value, array)
+        max_element = array[max_index]
+        min_element = array[min_index] if min_index < len(array) else array[-1]
+        offset = -1
+        min_index -= offset
 
-    max_element = array[max_index] if max_index < len(array) else array[-1]
     if max_element < max_value:
-        max_index += 1
+        max_index += offset
+    if min_element > min_value:
+        min_index -= offset
 
-    max_index += 1  # Make the maximum inclusive
-
-    return min_index, max_index
+    if min_index < max_index:
+        return min_index, max_index
+    else:
+        return max_index, min_index
 
 
 def find_index(value, array):
-    if array[1] > array[0]:
+    if is_increasing_array(array):
         index = find_index_from_increasing_array(value, array)
     else:
         index = find_index_from_decreasing_array(value, array)
     return index
+
+
+def is_increasing_array(array) -> bool:
+    return array[1] > array[0]
 
 
 def find_index_from_increasing_array(value, array):
@@ -149,7 +167,7 @@ def find_index_from_increasing_array(value, array):
     min_ = array[0]
     value -= min_
     if value < 0:
-        return 1
+        return 0
 
     idx = int(value // increment)
     if idx < 1:
