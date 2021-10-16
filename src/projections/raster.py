@@ -208,8 +208,8 @@ def fill_no_data_value(array: np.array, no_data_value=None, fill_with=0):
 def transform_array_to_df(array, lats, lons, geo=True):
     obj = {
         "value": array.reshape(-1),
-        "lon": np.repeat(lons, lats.shape[0]),
-        "lat": np.tile(lats, lons.shape[0]),
+        "lon": np.tile(lons, lats.shape[0]),
+        "lat": np.repeat(lats, lons.shape[0]),
     }
     if geo:
         df = gpd.GeoDataFrame(obj, geometry=gpd.points_from_xy(obj["lon"], obj["lat"]))
