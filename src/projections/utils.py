@@ -9,22 +9,6 @@ from pathlib import Path
 from unittest.mock import MagicMock
 
 
-def combine_dataframes(dfs: List[pd.DataFrame]):
-    df = dfs[0]
-    if len(dfs) > 1:
-        df = df.append(dfs[1:], ignore_index=True)
-    return df
-
-
-def get_weighted_average(df, value: str, weight: str, by: list):
-    df = df.copy()
-    df["_weighted_value_"] = df[value] * df[weight]
-    df = df.groupby(by)[["_weighted_value_", weight]].sum()
-    df["_weighted_value_"] /= df[weight]
-    df.rename({"_weighted_value_": value}, inplace=True)
-    return df.reset_index()
-
-
 def aggregate_by_groups(df, groups, output_folder, values, done=None, batch=None):
     batch = "" if batch is None else f"_b{batch}"
     if done is None:
@@ -75,6 +59,22 @@ def aggregate_feather_splits(files: list, no_data_value=None):
     dfs = [combine_dataframes(country_dfs) for country_dfs in countries.values()]
     df = combine_dataframes(dfs)
     df.rename(columns={"_weighted_value_": "value"}, inplace=True)
+    return df
+
+
+def get_weighted_average(df, value: str, weight: str, by: list):
+    df = df.copy()
+    df["_weighted_value_"] = df[value] * df[weight]
+    df = df.groupby(by)[["_weighted_value_", weight]].sum()
+    df["_weighted_value_"] /= df[weight]
+    df.rename({"_weighted_value_": value}, inplace=True)
+    return df.reset_index()
+
+
+def combine_dataframes(dfs: List[pd.DataFrame]):
+    df = dfs[0]
+    if len(dfs) > 1:
+        df = df.append(dfs[1:], ignore_index=True)
     return df
 
 
@@ -153,3 +153,27 @@ def make_path(path):
     path = Path(path)
     path.mkdir(exist_ok=True)
     return path
+
+
+def union_and_save_portions(read_from: Path, save_in: Path):
+    """
+    As part of shapefile preprocessing, some adm2 polygons were split into smaller
+    pieces called "portions". Union these back together and save them as feather.
+    """
+    df_by_region = {}
+    for file in tqdm(read_from.glob("*.csv"), desc="Reading"):
+        try:
+            df = pd.read_csv(file)
+        except pd.errors.EmptyDataError:
+            continue
+
+        if "id" not in df.columns:
+            df["id"] = df["adm2"]
+            df["id"].fillna(df["adm1"], inplace=True)
+            df["id"].fillna(df["adm0"], inplace=True)
+        region = df.loc[0, "id"]
+        df_by_region.setdefault(region, []).append(df)
+
+    for region, dfs in tqdm(df_by_region.items(), desc="Saving"):
+        df = combine_dataframes(dfs)
+        df.to_feather(save_in / f"{region}.feather")

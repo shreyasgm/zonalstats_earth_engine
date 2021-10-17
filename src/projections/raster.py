@@ -206,6 +206,9 @@ def fill_no_data_value(array: np.array, no_data_value=None, fill_with=0):
 
 
 def transform_array_to_df(array, lats, lons, geo=True):
+    array = np.array(array)
+    lats = np.array(lats)
+    lons = np.array(lons)
     obj = {
         "value": array.reshape(-1),
         "lon": np.tile(lons, lats.shape[0]),
