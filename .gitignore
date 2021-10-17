@@ -4,6 +4,8 @@
 
 .ipynb_checkpoints
 */.ipynb_checkpoints/*
+**/.ipynb_checkpoints/
+**/__pycache__/
 
 # IPython
 profile_default/
@@ -150,6 +152,9 @@ ENV/
 env.bak/
 venv.bak/
 
+# VSCode
+.vscode/
+
 # Spyder project settings
 .spyderproject
 .spyproject
@@ -173,3 +178,19 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# Data
+*.csv
+*.CSV
+*.zip
+*.xlsx*
+*.xls*
+*.pyc
+*.tif
+*.tar
+*.tex
+Data/
+Downloads/
+Shapefiles/
+Output/
+Leaders/
