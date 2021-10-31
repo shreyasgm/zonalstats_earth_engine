@@ -873,6 +873,14 @@ optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
 
 [[package]]
+name = "pycrs"
+version = "1.0.2"
+description = "GIS package for reading, writing, and converting between CRS formats."
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "pygeos"
 version = "0.10.1"
 description = "GEOS wrapped in numpy ufuncs"
@@ -1340,7 +1348,7 @@ viz = ["matplotlib", "seaborn", "nc-time-axis"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "f6007e1705da693da5e104cafd05547640a24689659370d9a92db937f2012164"
+content-hash = "82a4a19b4bd5e614fedf4fb25280d50a25f7a0739b3d36eee4f74f88f3e2ae7a"
 
 [metadata.files]
 affine = [
@@ -2032,6 +2040,9 @@ pyarrow = [
 pycparser = [
     {file = "pycparser-2.20-py2.py3-none-any.whl", hash = "sha256:7582ad22678f0fcd81102833f60ef8d0e57288b6b5fb00323d101be910e35705"},
     {file = "pycparser-2.20.tar.gz", hash = "sha256:2d475327684562c3a96cc71adf7dc8c4f0565175cf86b6d7a404ff4c771f15f0"},
+]
+pycrs = [
+    {file = "PyCRS-1.0.2.tar.gz", hash = "sha256:3a8cccd92024d813ab81811857f61cddb6ab2f4a1e784595c8dcd6a3a6fd7779"},
 ]
 pygeos = [
     {file = "pygeos-0.10.1-cp36-cp36m-macosx_10_9_x86_64.whl", hash = "sha256:273d08d2d9d4118b96bc5422c29eaaca0130d2276a69864ae1e977ce87c44735"},

@@ -28,6 +28,7 @@ h5py = "^3.4.0"
 tables = "^3.6.1"
 pyhdf = "^0.10.3"
 sklearn = "^0.0"
+PyCRS = "^1.0.2"
 
 [tool.poetry.dev-dependencies]
 jupyter = "^1.0.0"

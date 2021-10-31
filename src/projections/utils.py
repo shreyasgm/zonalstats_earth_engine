@@ -50,11 +50,21 @@ def aggregate_feather_splits(files: list, no_data_value=None):
         if df.empty:
             continue
 
-        df = get_weighted_average(
-            df, value="value", weight="intersection_area", by=["id"]
+        collapsed = get_weighted_average(
+            df, value="value", weight="intersection_area", by=["id"], new_name="a_value"
         )
-        country = df.loc[0, "id"]
-        countries.setdefault(country, []).append(df)
+        collapsed["s_value"] = get_area_weighted_sum(
+            df,
+            value="value",
+            weight="intersection_area",
+            area="grid_size",
+            by=["id"],
+        )["value"]
+        collapsed["n_grids"] = df.shape[0]
+        collapsed.reset_index(inplace=True)
+
+        country = collapsed.loc[0, "id"]
+        countries.setdefault(country, []).append(collapsed)
 
     dfs = [combine_dataframes(country_dfs) for country_dfs in countries.values()]
     df = combine_dataframes(dfs)
@@ -62,13 +72,27 @@ def aggregate_feather_splits(files: list, no_data_value=None):
     return df
 
 
-def get_weighted_average(df, value: str, weight: str, by: list):
+def get_weighted_average(df, value: str, weight: str, by: list, new_name: str = None):
     df = df.copy()
     df["_weighted_value_"] = df[value] * df[weight]
     df = df.groupby(by)[["_weighted_value_", weight]].sum()
     df["_weighted_value_"] /= df[weight]
-    df.rename({"_weighted_value_": value}, inplace=True)
-    return df.reset_index()
+
+    new_name = new_name if new_name else value
+    df.rename(columns={"_weighted_value_": new_name}, inplace=True)
+    return df
+
+
+def get_area_weighted_sum(
+    df, value: str, weight: str, area: str, by: list, new_name: str = None
+):
+    df = df.copy()
+    df["_proportion_"] = df[value] * (df[weight] / df[area])
+    df = df.groupby(by)[["_proportion_"]].sum()
+
+    new_name = new_name if new_name else value
+    df.rename(columns={"_proportion_": new_name}, inplace=True)
+    return df
 
 
 def combine_dataframes(dfs: List[pd.DataFrame]):
@@ -151,7 +175,7 @@ def get_save_file_name(prefix, row):
 
 def make_path(path):
     path = Path(path)
-    path.mkdir(exist_ok=True)
+    path.mkdir(exist_ok=True, parents=True)
     return path
 
 

@@ -1,12 +1,16 @@
+import json
+
 import geopandas as gpd
 import numpy as np
 import pandas as pd
+import pycrs
+import rasterio
 import shapely
 import xarray
 from shapely.geometry import LineString, MultiPolygon
 from shapely.geometry.polygon import Polygon
 
-from projections.constants import FLAT_CRS
+from projections.constants import FLAT_CRS, STANDARD_CRS
 
 
 def create_by_separation(df, lat: str = "lat", lon: str = "lon"):
@@ -28,35 +32,6 @@ def create_by_separation(df, lat: str = "lat", lon: str = "lon"):
     df["raster"] = df.buffer(sep["lat"] / 2, cap_style=3)
 
     return df
-
-
-def get_intersection_area(
-    df,
-    pol,
-    value_col=None,
-    lat="lat",
-    lon="lon",
-    raster="raster",
-):
-    if df.shape[0] == 0:
-        return None
-
-    row = gpd.GeoDataFrame(geometry=[pol], crs=4326)
-
-    pol = row["geometry"].iloc[0]
-    mask = slice(None)
-
-    intersection = df.loc[mask, raster].intersection(pol).set_crs(epsg=4326)
-    intersection_area = intersection.to_crs(FLAT_CRS).area
-
-    if value_col:
-        subdf = df.loc[mask, [lat, lon, value_col]].copy()
-    else:
-        subdf = df.loc[mask, [lat, lon]].copy()
-
-    subdf["intersection_area"] = intersection_area
-
-    return subdf
 
 
 def weighted_pivot(df, weight="intersection_ratio", value_name="value", id_vars=None):
@@ -94,9 +69,14 @@ def weighted_pivot(df, weight="intersection_ratio", value_name="value", id_vars=
 def find_subset_with_intersection_area(array: xarray.DataArray, pol):
     subset = get_df_by_maximum_bounds(array, pol, geo=True)
     increment = get_increment_from_tif(array)
-    include_square_raster(subset, increment=increment)
-    subset = get_intersection_area(subset, pol, value_col="value", lat="lat", lon="lon")
+    raster_name = include_square_raster(subset, increment=increment)
+    subset = get_intersection_area(
+        subset, pol, value_col="value", lat="lat", lon="lon", raster=raster_name
+    )
+
     if subset is not None:
+        include_grid_size(subset, column=raster_name)
+        subset.drop(columns=raster_name, inplace=True)
         subset = subset[subset["intersection_area"] > 0].copy()
     else:
         subset = pd.DataFrame()
@@ -226,7 +206,45 @@ def get_increment_from_tif(tif):
 
 
 def include_square_raster(df: gpd.GeoDataFrame, increment: float):
-    df["raster"] = df.buffer(increment / 2, cap_style=3)
+    column_name = "raster"
+    df[column_name] = df.buffer(increment / 2, cap_style=3)
+    return column_name
+
+
+def get_intersection_area(
+    df: gpd.GeoDataFrame,
+    pol,
+    value_col: str = None,
+    lat: str = "lat",
+    lon: str = "lon",
+    raster: str = "raster",
+):
+    if df.shape[0] == 0:
+        return None
+
+    row = gpd.GeoDataFrame(geometry=[pol], crs=STANDARD_CRS)
+
+    pol = row["geometry"].iloc[0]
+    mask = slice(None)
+
+    intersection = df.loc[mask, raster].intersection(pol).set_crs(epsg=STANDARD_CRS)
+    intersection_area = intersection.to_crs(FLAT_CRS).area
+
+    if value_col:
+        subdf = df.loc[mask, [lat, lon, raster, value_col]].copy()
+    else:
+        subdf = df.loc[mask, [lat, lon, raster]].copy()
+
+    subdf["intersection_area"] = intersection_area
+
+    return subdf
+
+
+def include_grid_size(df: gpd.GeoDataFrame, column: str = "raster"):
+    geometries = df.copy()
+    geometries["geometry"] = geometries[column]
+    geometries = geometries.set_crs(epsg=STANDARD_CRS)
+    df["grid_size"] = geometries.to_crs(FLAT_CRS)["geometry"].area
 
 
 def include_rectangular_raster(
@@ -253,6 +271,32 @@ def filter_gdf_by_distance(df: gpd.GeoDataFrame, pol, max_distance):
 
 def clip_raster(tif: xarray.DataArray, pol, crs):
     return tif.rio.clip([pol], crs)
+
+
+def fast_load_clip(
+    tif_path: str, gdf: gpd.GeoDataFrame, return_meta: bool = True
+) -> np.array:
+    from rasterio.mask import mask
+
+    im = rasterio.open(tif_path)
+    jgeo = [x["geometry"] for x in json.loads(gdf.to_json())["features"]]
+    out_im, out_transformation = mask(im, shapes=jgeo, crop=True)
+
+    if return_meta:
+        out_meta = im.meta.copy()
+        epsg_code = int(im.crs.data["init"][5:])
+        out_meta.update(
+            {
+                "driver": "GTiff",
+                "height": out_im.shape[1],
+                "width": out_im.shape[2],
+                "transform": out_transformation,
+                "crs": pycrs.parse.from_epsg_code(epsg_code).to_proj4(),
+            }
+        )
+        return out_im, out_meta
+
+    return out_im
 
 
 def transform_xarray_to_gpd(array):
